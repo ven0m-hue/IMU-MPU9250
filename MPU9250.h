@@ -172,8 +172,8 @@ float getMres(uint8_t Mscale);
 #define MPU9250_I2C_TIMEOUT 100
 
 //Math Constants
-#define PI 3.142857
-#define g  9.80665
+#define PI 3.142857f
+#define g  9.80665f
 //Enums to select the scale and range
 enum Ascale
 {
