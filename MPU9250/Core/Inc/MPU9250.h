@@ -33,7 +33,7 @@ typedef struct
 
 /*API calls*/
 //Inits
-uint8_t MPU9250_init(MPU9250_Handle_t *imu, I2C_HandleTypeDef *I2Chandle);
+uint8_t MPU9250_init(MPU9250_Handle_t *imu);
 //Reads
 void MPU9250_ReadAccel(MPU9250_Handle_t *imu);
 void MPU9250_ReadGyro(MPU9250_Handle_t *imu);
