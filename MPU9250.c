@@ -106,8 +106,8 @@ void MPU9250_ReadAccel(MPU9250_Handle_t *imu)
 	int16_t accZ = (int16_t)((int16_t)rawdata[4] << 8 | rawdata[5]);
 
 	imu->acc[0] =  accX * getAres(Ascale);
-	imu->acc[0] =  accY * getAres(Ascale);
-	imu->acc[0] = -accZ * getAres(Ascale);
+	imu->acc[1] =  accY * getAres(Ascale);
+	imu->acc[2] = -accZ * getAres(Ascale);
 
 }
 
@@ -121,8 +121,8 @@ void MPU9250_ReadGyro(MPU9250_Handle_t *imu)
 	int16_t gyrZ = (int16_t)((int16_t)rawdata[4] << 8 | rawdata[5]);
 
 	imu->gyr[0] =  gyrX * getGres(Gscale);
-	imu->gyr[0] =  gyrY * getGres(Gscale);
-	imu->gyr[0] =  gyrZ * getGres(Gscale);
+	imu->gyr[1] =  gyrY * getGres(Gscale);
+	imu->gyr[2] =  gyrZ * getGres(Gscale);
 }
 
 void MPU9250_ReadMag(MPU9250_Handle_t *imu)
@@ -143,8 +143,8 @@ void MPU9250_ReadMag(MPU9250_Handle_t *imu)
 			int16_t magZ = (int16_t)((int16_t)rawdata[5] << 8 | rawdata[4]);
 
 			imu->mag[0] =  magX * getMres(Mscale);
-			imu->mag[0] =  magY * getMres(Mscale);
-			imu->mag[0] =  magZ * getMres(Mscale);
+			imu->mag[1] =  magY * getMres(Mscale);
+			imu->mag[2] =  magZ * getMres(Mscale);
 
 		}
 	}
