@@ -22,9 +22,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "MPU9250.h"
 /* USER CODE END Includes */
-
+#include "stdio.h"
+#include "String.h"
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -36,16 +37,16 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define SAMPLE_TIME_ACC 25
+#define SAMPLE_TIME_COM_MS 200
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+MPU9250_Handle_t imu;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,7 +70,9 @@ static void MX_I2C1_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	uint8_t buf[64];
 
+	memset(buf, 0, sizeof(buf));
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -85,7 +88,6 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -93,18 +95,27 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  imu.I2Chandle = &hi2c1;
+  if(MPU9250_init(&imu) == 0)
+  {
+	  Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+    MPU9250_ReadAccel(&imu);MPU9250_ReadGyro(&imu);MPU9250_ReadMag(&imu);
+    sprintf((char*)buf, "ACCEL:: X: %.2f g, Y: %.2f g, Z: %.2f g C\r\n", imu.acc[0], imu.acc[1], imu.acc[2]);
+    HAL_UART_Transmit(&huart2, buf, sizeof(buf), HAL_MAX_DELAY);
+    HAL_Delay(2000);
+    //sprintf(buf, "GYRO:: X: %.2f , Y: %.2f , Z: %.2f  C\r\n", imu.gyr[0], imu.gyr[1], imu.gyr[2]);
+    //HAL_UART_Transmit(&huart2, (uint8_t*)buf, sizeof(buf), HAL_MAX_DELAY);
+    //HAL_Delay(2000);
   }
-  /* USER CODE END 3 */
+
 }
 
 /**
@@ -159,16 +170,8 @@ void SystemClock_Config(void)
   */
 static void MX_I2C1_Init(void)
 {
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.ClockSpeed = 100000;   // 1MHz
   hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -180,10 +183,6 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
@@ -194,13 +193,6 @@ static void MX_I2C1_Init(void)
 static void MX_USART2_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
   huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
@@ -213,10 +205,6 @@ static void MX_USART2_UART_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
 }
 
 /**
