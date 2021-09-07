@@ -51,7 +51,7 @@ float getMres(uint8_t Mscale);
  */
 
 //Magnetometer Registers
-#define AK8963_ADDRESS   0x0C << 1, left shifted by one for 7bit addresses.
+#define AK8963_ADDRESS   0x0C << 1// left shifted by one for 7bit addresses.
 #define AK8963_WHO_AM_I  0x00 // should return 0x48
 #define AK8963_INFO      0x01
 #define AK8963_ST1       0x02  // data ready status bit 0
