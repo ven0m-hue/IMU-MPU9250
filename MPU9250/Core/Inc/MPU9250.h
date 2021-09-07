@@ -51,7 +51,7 @@ float getMres(uint8_t Mscale);
  */
 
 //Magnetometer Registers
-#define AK8963_ADDRESS   0x0C << 1
+#define AK8963_ADDRESS   0x0C << 1, left shifted by one for 7bit addresses.
 #define AK8963_WHO_AM_I  0x00 // should return 0x48
 #define AK8963_INFO      0x01
 #define AK8963_ST1       0x02  // data ready status bit 0
@@ -164,9 +164,9 @@ float getMres(uint8_t Mscale);
 //Device address value
 #define ADO 0
 #if ADO
-#define MPU9250_ADDRESS 0x69  // Device address when ADO = 1
+#define MPU9250_ADDRESS 0x69 << 1  // Device address when ADO = 1, left shifted by one for 7bit addresses.
 #else
-#define MPU9250_ADDRESS 0x68  // Device address when ADO = 0
+#define MPU9250_ADDRESS 0x68 << 1  // Device address when ADO = 0, left shifted by one for 7bit addresses.
 #endif
 
 #define MPU9250_I2C_TIMEOUT 100
