@@ -5,4 +5,6 @@ MPU9250 consists of MEMS based 3 Dof Accelerometer, Magnetometer, Gyroscope.
 
 Intended use - STM32 based microcontroller. Developed using STM32 CubeIDE.
 
+uses, PB6 - SCL || PB7 - SDA
+
 
