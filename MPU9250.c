@@ -18,7 +18,7 @@
 #include "MPU9250.h"
 
 static void AK8963_init(I2C_HandleTypeDef *I2Chandle);
-
+//Some helper function prototypes
 static void writeByte(I2C_HandleTypeDef *I2Chandle, uint8_t Address, uint8_t subAddress, uint8_t data);
 static uint8_t readByte(I2C_HandleTypeDef *I2Chandle, uint8_t Address, uint8_t subAddress);
 
@@ -30,7 +30,7 @@ static uint8_t Mmode = 0x06;        // Either 8 Hz 0x02) or 100 Hz (0x06) magnet
 
 float mRes, gRes, aRes;
 
-uint8_t MPU9250_init(MPU9250_Handle_t *imu, I2C_HandleTypeDef *I2Chandle)
+uint8_t MPU9250_init(MPU9250_Handle_t *imu)
 {
 
 	/* 1.Reset all the sensors*/
@@ -45,7 +45,7 @@ uint8_t MPU9250_init(MPU9250_Handle_t *imu, I2C_HandleTypeDef *I2Chandle)
 	 *   Sample_rate = gyro_output_rate/(1 + SMPLRT_DIV)
 	 */
 	writeByte(imu->I2Chandle, MPU9250_ADDRESS, CONFIG, 0x03);
-    // Using the 200Hz rate
+    	// Using the 200Hz rate
 	writeByte(imu->I2Chandle, MPU9250_ADDRESS, SMPLRT_DIV, 0x04);
 
 	/*4.Gyro Scale selection
