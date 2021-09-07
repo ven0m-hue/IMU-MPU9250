@@ -164,9 +164,9 @@ float getMres(uint8_t Mscale);
 //Device address value
 #define ADO 0
 #if ADO
-#define MPU9250_ADDRESS 0x69  // Device address when ADO = 1
+#define MPU9250_ADDRESS (0x69 << 1) // Device address when ADO = 1, left shifted by one for 7bit addresses.
 #else
-#define MPU9250_ADDRESS 0x68  // Device address when ADO = 0
+#define MPU9250_ADDRESS (0x68 << 1)  // Device address when ADO = 0, left shifted by one for 7bit addresses.
 #endif
 
 #define MPU9250_I2C_TIMEOUT 100
