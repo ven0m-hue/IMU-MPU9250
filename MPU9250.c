@@ -135,7 +135,7 @@ void MPU9250_ReadMag(MPU9250_Handle_t *imu)
 		/*Check the Overflow flag in the SR of AK8963
 		 * wait until it gets cleared
 		 * refer @ reference manual pg 50*/
-		if( readByte(imu->I2Chandle, MPU9250_ADDRESS, AK8963_ST2) & 0x08)
+		if( !(readByte(imu->I2Chandle, MPU9250_ADDRESS, AK8963_ST2) & 0x08))
 		{
 
 			int16_t magX = (int16_t)((int16_t)rawdata[1] << 8 | rawdata[0]);
