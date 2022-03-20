@@ -17,10 +17,7 @@
 */
 #include "MPU9250.h"
 
-static void AK8963_init(I2C_HandleTypeDef *I2Chandle);
-//Some helper function prototypes
-static void writeByte(I2C_HandleTypeDef *I2Chandle, uint8_t Address, uint8_t subAddress, uint8_t data);
-static uint8_t readByte(I2C_HandleTypeDef *I2Chandle, uint8_t Address, uint8_t subAddress);
+
 
 //Default Selection, overided with the enum scale selection
 static uint8_t Ascale = AFS_2G;     // AFS_2G, AFS_4G, AFS_8G, AFS_16G
