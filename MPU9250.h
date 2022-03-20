@@ -10,19 +10,9 @@
 
 #include "main.h"   // While transporting the file remember to change the header directory and neccessary declarations
 
-#if 0
-typedef struct
-{
-	I2C_TypeDef *I2Chandle; /* Handle to the I2C peripheral */
-	GPIO_InitTypeDef *GPIO_INT_PIN; /* Handle to configure the Alternate Functionality of the GPIO pins*/
-
-}MPU_Config_t;
-#endif
-
 typedef struct
 {
 	I2C_HandleTypeDef *I2Chandle; /* Handle to the I2C peripheral */
-	GPIO_InitTypeDef *GPIO_INT_PIN; /* Handle to configure the Alternate Functionality of the GPIO pins*/
 
 	float acc[3];    /*3 axis accel OutPut*/
 	float gyr[3];	 /*3 axis gyro OutPut*/
