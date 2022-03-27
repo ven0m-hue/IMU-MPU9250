@@ -13,6 +13,7 @@ namespace IMU {
 //TODO Constructor pending
 //TODO Compile Fix Erros if any
 //TODO Unit Testing
+//TODO Organizing the code 
 
 //Short hands for Ascale
 typedef Ascale::AFS_2G   Ascale_2G;
