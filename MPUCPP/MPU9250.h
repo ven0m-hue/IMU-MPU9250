@@ -157,12 +157,12 @@ enum class Ascale
 
 enum class Gscale
 {
-	GFS_250DPS = 0, GFS_500DPS, GFS_1000DPS, GFS_2000DPS
+	GFS_250DPS = 4, GFS_500DPS, GFS_1000DPS, GFS_2000DPS
 };
 
 enum class Mscale
 {
-	MFS_14BITS = 0, MFS_16BITS
+	MFS_14BITS = 8, MFS_16BITS
 };
 
 
@@ -174,11 +174,7 @@ public:
 
 	MPU9250();
 
-	virtual ~MPU9250()
-	{
-		delete I2Chandle;
-		delete GPIO_INT_PIN;
-	}
+	virtual ~MPU9250();
 
 	MPU9250(const MPU9250 &other);
 
@@ -196,7 +192,7 @@ public:
 	void writeByte(I2C_HandleTypeDef& hi2c, const uint8_t Address, const uint8_t subAddress, const uint8_t data);
 	uint8_t readByte(I2C_HandleTypeDef& hi2c, const uint8_t Address, const uint8_t subAddress);
 
-	double getScale(const uint8_t scale);  // Gets the appropritate scale for GYRO, MAG, ACCEL
+	double getScale(const uint16_t scale);  // Gets the appropritate scale for GYRO, MAG, ACCEL
 
 private:
 
