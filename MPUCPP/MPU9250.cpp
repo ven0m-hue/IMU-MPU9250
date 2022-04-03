@@ -10,36 +10,37 @@
 namespace IMU {
 
 
-//TODO Constructor pending
-//TODO Compile Fix Erros if any
 //TODO Unit Testing
-//TODO Organizing the code 
+//TODO Organizing the code
 
 //Short hands for Ascale
-typedef Ascale::AFS_2G   Ascale_2G;
-typedef Ascale::AFS_4G   Ascale_4G;
-typedef Ascale::AFS_8G   Ascale_8G;
-typedef Ascale::AFS_16G  Ascale_16G;
+Ascale Ascale_2G = Ascale::AFS_2G;
+Ascale Ascale_4G = Ascale::AFS_4G;
+Ascale Ascale_8G = Ascale::AFS_8G;
+Ascale Ascale_16G = Ascale::AFS_16G;
 
 //Short hands for Gscale
-typedef Gscale::GFS_250DPS    Gscale_250;
-typedef Gscale::GFS_500DPS    Gscale_500;
-typedef Gscale::GFS_1000DPS   Gscale_1000;
-typedef Gscale::GFS_2000DPS   Gscale_2000;
-
+Gscale Gscale_250 = Gscale::GFS_250DPS;
+Gscale Gscale_500 = Gscale::GFS_500DPS;
+Gscale Gscale_1000 = Gscale::GFS_1000DPS;
+Gscale Gscale_2000 = Gscale::GFS_2000DPS;
 //Short hands for Ascale
-typedef Mscale::MFS_14BITS		Mscale_14;
-typedef Mscale::MFS_16BITS		Mscale_16;
+
+Mscale Mscale_14 = Mscale::MFS_14BITS;
+Mscale Mscale_16 = Mscale::MFS_16BITS;
+
 
 MPU9250::MPU9250()
+:acc{}, gyr{}, mag{}, roll_offset(0), pitch_offset(0)
 {
 	// TODO call init function inside this constructor, probably define it in the main function
 	Init(*this);
-
 }
 
 MPU9250::~MPU9250() {
 	// TODO Auto-generated destructor stub
+	delete I2Chandle;
+	delete GPIO_INT_PIN;
 }
 
 MPU9250::MPU9250(const MPU9250 &other)
@@ -51,9 +52,9 @@ MPU9250::MPU9250(const MPU9250 &other)
 		*I2Chandle = *(other.I2Chandle);
 		*GPIO_INT_PIN = *(other.GPIO_INT_PIN);
 
-		this->acc = other.acc;
-		this->gyr = other.gyr;
-		this->mag = other.mag;
+		this->acc[3] = other.acc[3];
+		this->gyr[3] = other.gyr[3];
+		this->mag[3] = other.mag[3];
 		this->roll_offset = other.roll_offset;
 		this->pitch_offset = other.pitch_offset;
 
@@ -68,32 +69,33 @@ MPU9250& MPU9250::operator=(const MPU9250 &other) {
 		*I2Chandle = *(other.I2Chandle);
 		*GPIO_INT_PIN = *(other.GPIO_INT_PIN);
 
-		this->acc = other.acc;
-		this->gyr = other.gyr;
-		this->mag = other.mag;
+		this->acc[3] = other.acc[3];
+		this->gyr[3] = other.gyr[3];
+		this->mag[3] = other.mag[3];
 		this->roll_offset = other.roll_offset;
 		this->pitch_offset = other.pitch_offset;
 	}
 
+	return *this;
 }
 
 
 bool MPU9250::Init(const MPU9250 &imu){
 
 	/* 1.Reset all the sensors*/
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, PWR_MGMT_1, 0x00);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, PWR_MGMT_1, 0x00);
 	HAL_Delay(10); // 1ms delay
 
 	/*2. Power management and Crystal clock settings*/
-	writeByte(imu->I2Chandle, MPU9250_ADDRESS, PWR_MGMT_1, 0x01);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, PWR_MGMT_1, 0x01);
 	/*3. Configure the accel and gyro
 	 *   Set the sample rate and bandwidth  as 1KHz and 42 Hz @refer_datasheet pg 15
 	 *   DLPF_CFG = b'11
 	 *   Sample_rate = gyro_output_rate/(1 + SMPLRT_DIV)
 	 */
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, CONFIG, 0x03);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, CONFIG, 0x03);
 	// Using the 200Hz rate -> From the above calculation.
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, SMPLRT_DIV, 0x04);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, SMPLRT_DIV, 0x04);
 
 	/*4.Gyro Scale selection
 	 * 1. Clear the Gyro_config register
@@ -105,26 +107,26 @@ bool MPU9250::Init(const MPU9250 &imu){
 	uint8_t rxData;
 
 	//Gyro
-	rxData = readByte(imu.I2Chandle, MPU9250_ADDRESS, GYRO_CONFIG);
+	rxData = readByte(*(imu.I2Chandle), MPU9250_ADDRESS, GYRO_CONFIG);
 	rxData &= ~(0x02); //celars fchoice
 	rxData &= ~(0x18); //celars GFS
-	rxData |= (Gscale << 3);
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, GYRO_CONFIG, rxData);
+	rxData |= (uint16_t(Gscale_250) << 3);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, GYRO_CONFIG, rxData);
 
 	//Accel
-	rxData = readByte(imu.I2Chandle, MPU9250_ADDRESS, ACCEL_CONFIG);
+	rxData = readByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG);
 	rxData &= ~(0x18); //celars GFS
-	rxData |= (Ascale << 3);
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, ACCEL_CONFIG, rxData);
+	rxData |= (uint16_t(Ascale_2G) << 3);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG, rxData);
 
 	/*
 	 * Set accel sample rate @4KHz refer data_sheet pg 17
 	 * Bw = 41Hz
 	 */
-	rxData = readByte(imu.I2Chandle, MPU9250_ADDRESS, ACCEL_CONFIG2);
+	rxData = readByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG2);
 	rxData &= ~(0x0F);
 	rxData |= 0x03;
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, ACCEL_CONFIG2, rxData);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG2, rxData);
 
 	//Originally all the sensor are set to 1KHz, however refacotred using SMPLRT_DIV to 200hz
 
@@ -132,12 +134,12 @@ bool MPU9250::Init(const MPU9250 &imu){
 	 * Interrupt for rasing edge and clears on read
 	 * @refer reference manual  pg 29
 	 */
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, INT_PIN_CFG, 0x22);
-	writeByte(imu.I2Chandle, MPU9250_ADDRESS, INT_ENABLE, 0x01);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, INT_PIN_CFG, 0x22);
+	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, INT_ENABLE, 0x01);
 
 	/*7.Configure the magnetometer*/
-	AK8963_Init(imu.I2Chandle);
-	this->AK8963_Init(imu.I2Chandle);
+	AK8963_Init(*(imu.I2Chandle));
+	this->AK8963_Init(*(imu.I2Chandle));
 	//self_calibrate_accel_pressure(imu, 1000);
 
 	return true;
@@ -154,9 +156,9 @@ void MPU9250::ReadAccel(MPU9250 &imu)
 	int16_t accZ = (int16_t)((int16_t)rawdata[4] << 8 | rawdata[5]);
 
 	//Follows the NED coordinate frame.
-	imu.acc[0] =  accX * getScale(Ascale_2G);
-	imu.acc[1] =  accY * getScale(Ascale_2G);
-	imu.acc[2] = -accZ * getScale(Ascale_2G);
+	imu.acc[0] =  accX * getScale(uint16_t(Ascale_2G));
+	imu.acc[1] =  accY * getScale(uint16_t(Ascale_2G));
+	imu.acc[2] = -accZ * getScale(uint16_t(Ascale_2G));
 
 }
 
@@ -164,37 +166,37 @@ void MPU9250::ReadAccel(MPU9250 &imu)
 void MPU9250::ReadGyro(MPU9250 &imu)
 {
 	uint8_t rawdata[6];
-	HAL_I2C_Mem_Read(imu->I2Chandle, MPU9250_ADDRESS, GYRO_XOUT_H, I2C_MEMADD_SIZE_8BIT, rawdata, 6, MPU9250_I2C_TIMEOUT);
+	HAL_I2C_Mem_Read(imu.I2Chandle, MPU9250_ADDRESS, GYRO_XOUT_H, I2C_MEMADD_SIZE_8BIT, rawdata, 6, MPU9250_I2C_TIMEOUT);
 
 	int16_t gyrX = (int16_t)((int16_t)rawdata[0] << 8 | rawdata[1]);
 	int16_t gyrY = (int16_t)((int16_t)rawdata[2] << 8 | rawdata[3]);
 	int16_t gyrZ = (int16_t)((int16_t)rawdata[4] << 8 | rawdata[5]);
 
-	imu.gyr[0] =  gyrX * getScale(Gscale_250);
-	imu.gyr[1] =  gyrY * getScale(Gscale_250);
-	imu.gyr[2] =  gyrZ * getScale(Gscale_250);
+	imu.gyr[0] =  gyrX * getScale(uint16_t(Gscale_250));
+	imu.gyr[1] =  gyrY * getScale(uint16_t(Gscale_250));
+	imu.gyr[2] =  gyrZ * getScale(uint16_t(Gscale_250));
 }
 
 void MPU9250::ReadMag(MPU9250 &imu)
 {
 	uint8_t rawdata[6];
 	/*Wait for Mag to be ready*/
-	if(readByte(imu->I2Chandle, MPU9250_ADDRESS, AK8963_ST1) & 0x01)
+	if(readByte(*(imu.I2Chandle), MPU9250_ADDRESS, AK8963_ST1) & 0x01)
 	{
-		HAL_I2C_Mem_Read(imu->I2Chandle, MPU9250_ADDRESS, AK8963_XOUT_L, I2C_MEMADD_SIZE_8BIT, rawdata, 3, MPU9250_I2C_TIMEOUT);
+		HAL_I2C_Mem_Read(imu.I2Chandle, MPU9250_ADDRESS, AK8963_XOUT_L, I2C_MEMADD_SIZE_8BIT, rawdata, 3, MPU9250_I2C_TIMEOUT);
 		/*Check the Overflow flag in the SR of AK8963
 		 * wait until it gets cleared
 		 * refer @ reference manual pg 50*/
-		if( !(readByte(imu->I2Chandle, MPU9250_ADDRESS, AK8963_ST2) & 0x08))
+		if( !(readByte(*(imu.I2Chandle), MPU9250_ADDRESS, AK8963_ST2) & 0x08))
 		{
 
 			int16_t magX = (int16_t)((int16_t)rawdata[1] << 8 | rawdata[0]);
 			int16_t magY = (int16_t)((int16_t)rawdata[3] << 8 | rawdata[2]);
 			int16_t magZ = (int16_t)((int16_t)rawdata[5] << 8 | rawdata[4]);
 
-			imu->mag[0] =  magX * getScale(Mscale_16);
-			imu->mag[1] =  magY * getScale(Mscale_16);
-			imu->mag[2] =  magZ * getScale(Mscale_16);
+			imu.mag[0] =  magX * getScale(uint16_t(Mscale_16));
+			imu.mag[1] =  magY * getScale(uint16_t(Mscale_16));
+			imu.mag[2] =  magZ * getScale(uint16_t(Mscale_16));
 
 		}
 	}
@@ -204,16 +206,16 @@ void MPU9250::ReadMag(MPU9250 &imu)
 void MPU9250::writeByte(I2C_HandleTypeDef& hi2c, uint8_t Address, uint8_t subAddress, uint8_t data)
 {
 	uint8_t txData[] = {subAddress, data};
-	HAL_I2C_Master_Transmit(hi2c, MPU9250_ADDRESS, txData, 2, MPU9250_I2C_TIMEOUT);
+	HAL_I2C_Master_Transmit(&hi2c, MPU9250_ADDRESS, txData, 2, MPU9250_I2C_TIMEOUT);
 }
 
 uint8_t MPU9250::readByte(I2C_HandleTypeDef& hi2c, uint8_t Address, uint8_t subAddress)
 {
 	uint8_t rxData[1];
 	uint8_t txData[] = {subAddress};
-	HAL_I2C_Master_Transmit(hi2c, MPU9250_ADDRESS, txData, 1, MPU9250_I2C_TIMEOUT);
+	HAL_I2C_Master_Transmit(&hi2c, MPU9250_ADDRESS, txData, 1, MPU9250_I2C_TIMEOUT);
 
-	HAL_I2C_Master_Receive(hi2c, MPU9250_ADDRESS, rxData, 1, MPU9250_I2C_TIMEOUT);
+	HAL_I2C_Master_Receive(&hi2c, MPU9250_ADDRESS, rxData, 1, MPU9250_I2C_TIMEOUT);
 
 	return rxData[0];
 }
@@ -233,11 +235,11 @@ void MPU9250::AK8963_Init(I2C_HandleTypeDef& hi2c)
 	/*4.Mscale enable the 16bit resolution mode
 	 *  Enable continous mode data acquisition Mmode = b'0110 @refer data sheet
 	 */
-	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, Mscale << (4 | Mmode));
+	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, (uint16_t(Mscale_16) << (4 | 0x06)) );
 	HAL_Delay(1);
 }
 
-double MPU9250::getScale(const uint8_t scale)
+double MPU9250::getScale(const uint16_t scale)
 {
 	double result = 0.0f;
 
@@ -253,19 +255,19 @@ double MPU9250::getScale(const uint8_t scale)
 	 * Convert the acceleration value interms of acceleration due to gravity to make sense of the data.
 	 */
 
-	case Ascale::AFS_2G:
+	case uint16_t(Ascale::AFS_2G):
 		  result = ((PHY_g)/(16384.0));
 		  break;
 
-	case Ascale::AFS_4G:
+	case uint16_t(Ascale::AFS_4G):
 		result = ((PHY_g)/(8192));
 		  break;
 
-	case Ascale::AFS_8G:
+	case uint16_t(Ascale::AFS_8G):
 		result = ((PHY_g)/(4096));
 		  break;
 
-	case Ascale::AFS_16G:
+	case uint16_t(Ascale::AFS_16G):
 		result = ((PHY_g)/(2048));
 		  break;
 
@@ -278,19 +280,19 @@ double MPU9250::getScale(const uint8_t scale)
 	 *  To get the output in rad/sec for future computation convert deg/s -> rad/s
 	 */
 
-	case Gscale::GFS_250DPS:
+	case uint16_t(Gscale::GFS_250DPS):
 		result = ((PI)/( 180 * 131));
 		break;
 
-	case Gscale::GFS_500DPS:
+	case uint16_t(Gscale::GFS_500DPS):
 		result = ((PI)/(180 * 65.5));
 		break;
 
-	case Gscale::GFS_1000DPS:
+	case uint16_t(Gscale::GFS_1000DPS):
 		result = ((PI)/(180 * 32.8));
 		break;
 
-	case Gscale::GFS_2000DPS:
+	case uint16_t(Gscale::GFS_2000DPS):
 		result = ((PI)/(180 * 16.4));
 		break;
 
@@ -300,11 +302,11 @@ double MPU9250::getScale(const uint8_t scale)
 	 * Mmode = 14 bit resolution (0) and 16 bit resolution (1)
 	 */
 
-	case Mscale::MFS_14BITS:
+	case uint16_t(Mscale::MFS_14BITS):
 		result = ((10.0 * 4912.0)/(8190.0)); // Proper scale to return milliGauss
 		break;
 
-	case Mscale::MFS_16BITS:
+	case uint16_t(Mscale::MFS_16BITS):
 		result = ((10.0 * 4912.0)/(32760.0)); // Proper scale to return milliGauss
 		break;
 
