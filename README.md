@@ -11,5 +11,6 @@ uses, PB6 - SCL || PB7 - SDA
 
 
 @Update: Currently I am switching from Embedded C to Cpp for a loads of reason. 
-Transfroming the MPU9250 driver file from C code to Cpp for STM32. 
+Transforming the MPU9250 driver file from C code to Cpp for STM32. 
 Might also plan on adding features for SPI protocol. 
+Might also plan on adding a MPU9250 Wrapper. 
