@@ -10,7 +10,7 @@
 namespace IMU {
 
 
-//TODO Unit Testing
+//TODO Unit Testing --> possible sensor error (No accurate data being output)
 //TODO Organizing the code
 
 //Short hands for Ascale
@@ -30,10 +30,11 @@ Mscale Mscale_14 = Mscale::MFS_14BITS;
 Mscale Mscale_16 = Mscale::MFS_16BITS;
 
 
-MPU9250::MPU9250()
+MPU9250::MPU9250(I2C_HandleTypeDef &hi2c)
 :acc{}, gyr{}, mag{}, roll_offset(0), pitch_offset(0)
 {
 	// TODO call init function inside this constructor, probably define it in the main function
+	this->I2Chandle = &hi2c;
 	Init(*this);
 }
 
@@ -49,9 +50,8 @@ MPU9250::MPU9250(const MPU9250 &other)
 	if(this != &other)
 	{
 		//Handle deep copy
-		*I2Chandle = *(other.I2Chandle);
-		*GPIO_INT_PIN = *(other.GPIO_INT_PIN);
-
+		this->I2Chandle = other.I2Chandle;
+		this->GPIO_INT_PIN = other.GPIO_INT_PIN;
 		this->acc[3] = other.acc[3];
 		this->gyr[3] = other.gyr[3];
 		this->mag[3] = other.mag[3];
