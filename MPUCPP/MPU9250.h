@@ -223,8 +223,9 @@ private:
 	 * Helper function for the assiging the appropritate scales @refDataSheet.
 	 */
 	double getScale(const uint16_t scale);  // Gets the appropritate scale for GYRO, MAG, ACCEL
-
-public:
+	
+//Keep public when testing 
+private: 
 
 	double acc[3];    /*3 axis accel OutPut*/
 	double gyr[3];	  /*3 axis gyro OutPut*/
