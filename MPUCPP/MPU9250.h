@@ -172,44 +172,67 @@ class MPU9250 final {
 
 public:
 
-	MPU9250();
+	MPU9250(I2C_HandleTypeDef &hi2c);
 
 	virtual ~MPU9250();
 
-	MPU9250(const MPU9250 &other);
+	MPU9250(const MPU9250 &other); //Copy constructor
 
-	MPU9250& operator=(const MPU9250 &other);
+	MPU9250& operator=(const MPU9250 &other); //Assignment operator overload
 
 
 	//API calls
-	bool Init(const MPU9250 &imu); //Gyro_init and Accel_init
+
+	/*
+	 * To be used inside the constructor for global initialization.
+	 *
+	 * Initializes the  Gyro_init, Accel_init and Mag_init.
+	 *
+	 * Mag_init is called inside the init api.
+	 *
+	 * Returns true if successful.
+	 *
+	 */
+	bool Init(const MPU9250 &imu);
+	void AK8963_Init(I2C_HandleTypeDef& hi2c);  //Mag_init
+
+	/*
+	 * Reads the Accel, Gyro, Mag via the I2c interface.
+	 *
+	 * Gives the data to the global private buffers respectively.
+	 */
 	void ReadAccel(MPU9250 &imu);
 	void ReadGyro(MPU9250 &imu);
 	void ReadMag(MPU9250 &imu);
 
-	void AK8963_Init(I2C_HandleTypeDef& hi2c);  //Mag_init
-
-	void writeByte(I2C_HandleTypeDef& hi2c, const uint8_t Address, const uint8_t subAddress, const uint8_t data);
-	uint8_t readByte(I2C_HandleTypeDef& hi2c, const uint8_t Address, const uint8_t subAddress);
-
-	double getScale(const uint16_t scale);  // Gets the appropritate scale for GYRO, MAG, ACCEL
-
-private:
-
-	double acc[3];    /*3 axis accel OutPut*/
-	double gyr[3];	 /*3 axis gyro OutPut*/
-	double mag[3];	 /*3 axis mag OutPut*/
-
-	double roll_offset;
-	double pitch_offset;
 
 public:
 
 	I2C_HandleTypeDef *I2Chandle; /* Handle to the I2C peripheral */
 	GPIO_InitTypeDef *GPIO_INT_PIN; /* Handle to configure the Alternate Functionality of the GPIO pins*/
 
-};
+private:
 
+	/*
+	 * Helper functions for the read and write data via the i2c interface.
+	 */
+	void writeByte(I2C_HandleTypeDef& hi2c, const uint8_t Address, const uint8_t subAddress, const uint8_t data);
+	uint8_t readByte(I2C_HandleTypeDef& hi2c, const uint8_t Address, const uint8_t subAddress);
+
+	/*
+	 * Helper function for the assiging the appropritate scales @refDataSheet.
+	 */
+	double getScale(const uint16_t scale);  // Gets the appropritate scale for GYRO, MAG, ACCEL
+
+public:
+
+	double acc[3];    /*3 axis accel OutPut*/
+	double gyr[3];	  /*3 axis gyro OutPut*/
+	double mag[3];	  /*3 axis mag OutPut*/
+
+	double roll_offset;
+	double pitch_offset;
+};
 
 
 } /* namespace IMU */
