@@ -24,8 +24,8 @@ Gscale Gscale_250 = Gscale::GFS_250DPS;
 Gscale Gscale_500 = Gscale::GFS_500DPS;
 Gscale Gscale_1000 = Gscale::GFS_1000DPS;
 Gscale Gscale_2000 = Gscale::GFS_2000DPS;
-//Short hands for Ascale
 
+//Short hands for Mscale
 Mscale Mscale_14 = Mscale::MFS_14BITS;
 Mscale Mscale_16 = Mscale::MFS_16BITS;
 
@@ -33,13 +33,13 @@ Mscale Mscale_16 = Mscale::MFS_16BITS;
 MPU9250::MPU9250(I2C_HandleTypeDef &hi2c)
 :acc{}, gyr{}, mag{}, roll_offset(0), pitch_offset(0)
 {
-	// TODO call init function inside this constructor, probably define it in the main function
+
 	this->I2Chandle = &hi2c;
 	Init(*this);
 }
 
 MPU9250::~MPU9250() {
-	// TODO Auto-generated destructor stub
+
 	delete I2Chandle;
 	delete GPIO_INT_PIN;
 }
@@ -52,6 +52,7 @@ MPU9250::MPU9250(const MPU9250 &other)
 		//Handle deep copy
 		this->I2Chandle = other.I2Chandle;
 		this->GPIO_INT_PIN = other.GPIO_INT_PIN;
+
 		this->acc[3] = other.acc[3];
 		this->gyr[3] = other.gyr[3];
 		this->mag[3] = other.mag[3];
@@ -66,8 +67,8 @@ MPU9250& MPU9250::operator=(const MPU9250 &other) {
 	if(this != &other)
 	{
 		//Handle deep copy
-		*I2Chandle = *(other.I2Chandle);
-		*GPIO_INT_PIN = *(other.GPIO_INT_PIN);
+		this->I2Chandle = other.I2Chandle;
+		this->GPIO_INT_PIN = other.GPIO_INT_PIN;
 
 		this->acc[3] = other.acc[3];
 		this->gyr[3] = other.gyr[3];
@@ -88,6 +89,7 @@ bool MPU9250::Init(const MPU9250 &imu){
 
 	/*2. Power management and Crystal clock settings*/
 	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, PWR_MGMT_1, 0x01);
+
 	/*3. Configure the accel and gyro
 	 *   Set the sample rate and bandwidth  as 1KHz and 42 Hz @refer_datasheet pg 15
 	 *   DLPF_CFG = b'11
@@ -97,12 +99,14 @@ bool MPU9250::Init(const MPU9250 &imu){
 	// Using the 200Hz rate -> From the above calculation.
 	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, SMPLRT_DIV, 0x04);
 
-	/*4.Gyro Scale selection
-	 * 1. Clear the Gyro_config register
+	/*4.Gyro/Accel Scale selection
+	 * 1. Clear the Gyro_config/Accel_config register
 	 * 2. Set the Fchoice = b'11 aka f_choice_b = b'00 and clear the GFS
 	 * 3. Select the gyro scale
 	 *
 	 * 5. Repeat the same sequence for the accel scale selection
+	 * Note: Scale moded with 4 due to enum evaluated consecutively from 0 to 9 of all the 3 enum class scales.
+	 * @refer register map pg 14.
 	 */
 	uint8_t rxData;
 
@@ -110,13 +114,13 @@ bool MPU9250::Init(const MPU9250 &imu){
 	rxData = readByte(*(imu.I2Chandle), MPU9250_ADDRESS, GYRO_CONFIG);
 	rxData &= ~(0x02); //celars fchoice
 	rxData &= ~(0x18); //celars GFS
-	rxData |= (uint16_t(Gscale_250) << 3);
+	rxData |= (uint16_t((Gscale_250)%4) << 3);
 	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, GYRO_CONFIG, rxData);
 
 	//Accel
 	rxData = readByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG);
 	rxData &= ~(0x18); //celars GFS
-	rxData |= (uint16_t(Ascale_2G) << 3);
+	rxData |= (uint16_t((Ascale_2G)%4) << 3);
 	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG, rxData);
 
 	/*
@@ -128,7 +132,7 @@ bool MPU9250::Init(const MPU9250 &imu){
 	rxData |= 0x03;
 	writeByte(*(imu.I2Chandle), MPU9250_ADDRESS, ACCEL_CONFIG2, rxData);
 
-	//Originally all the sensor are set to 1KHz, however refacotred using SMPLRT_DIV to 200hz
+	// Note:Originally all the sensor are set to 1KHz, however refacotred using SMPLRT_DIV to 200hz
 
 	/*6.Configure the interrupt pins
 	 * Interrupt for rasing edge and clears on read
@@ -145,6 +149,29 @@ bool MPU9250::Init(const MPU9250 &imu){
 	return true;
 
 }
+
+void MPU9250::AK8963_Init(I2C_HandleTypeDef& hi2c)
+{
+	/*1.Reset the Mag sensor*/
+	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
+	HAL_Delay(1);
+
+	/*2.Fuse rom access mode*/
+	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, 0x0F);
+	HAL_Delay(1);
+
+	/*3.Power doen Magnetometer*/
+	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
+	HAL_Delay(1);
+
+	/* 4.Mscale enable the 16bit resolution mode
+	 * Enable continous mode data acquisition Mmode = b'0110 @refer data sheet
+	 * Note: Scale moded with 4 due to enum evaluated consecutively from 0 to 9 of all the 3 enum class scales.
+	 */
+	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, (uint16_t((Mscale_16)%4) << (4 | 0x06)) );
+	HAL_Delay(1);
+}
+
 
 void MPU9250::ReadAccel(MPU9250 &imu)
 {
@@ -184,9 +211,11 @@ void MPU9250::ReadMag(MPU9250 &imu)
 	if(readByte(*(imu.I2Chandle), MPU9250_ADDRESS, AK8963_ST1) & 0x01)
 	{
 		HAL_I2C_Mem_Read(imu.I2Chandle, MPU9250_ADDRESS, AK8963_XOUT_L, I2C_MEMADD_SIZE_8BIT, rawdata, 3, MPU9250_I2C_TIMEOUT);
+
 		/*Check the Overflow flag in the SR of AK8963
 		 * wait until it gets cleared
 		 * refer @ reference manual pg 50*/
+
 		if( !(readByte(*(imu.I2Chandle), MPU9250_ADDRESS, AK8963_ST2) & 0x08))
 		{
 
@@ -203,6 +232,9 @@ void MPU9250::ReadMag(MPU9250 &imu)
 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////HELPER_FUNCTIONS/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void MPU9250::writeByte(I2C_HandleTypeDef& hi2c, uint8_t Address, uint8_t subAddress, uint8_t data)
 {
 	uint8_t txData[] = {subAddress, data};
@@ -218,25 +250,6 @@ uint8_t MPU9250::readByte(I2C_HandleTypeDef& hi2c, uint8_t Address, uint8_t subA
 	HAL_I2C_Master_Receive(&hi2c, MPU9250_ADDRESS, rxData, 1, MPU9250_I2C_TIMEOUT);
 
 	return rxData[0];
-}
-
-
-void MPU9250::AK8963_Init(I2C_HandleTypeDef& hi2c)
-{
-	/*1.Reset the Mag sensor*/
-	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
-	HAL_Delay(1);
-	/*2.Fuse rom access mode*/
-	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, 0x0F);
-	HAL_Delay(1);
-	/*3.Power doen Magnetometer*/
-	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
-	HAL_Delay(1);
-	/*4.Mscale enable the 16bit resolution mode
-	 *  Enable continous mode data acquisition Mmode = b'0110 @refer data sheet
-	 */
-	writeByte(hi2c, MPU9250_ADDRESS, AK8963_CNTL, (uint16_t(Mscale_16) << (4 | 0x06)) );
-	HAL_Delay(1);
 }
 
 double MPU9250::getScale(const uint16_t scale)
