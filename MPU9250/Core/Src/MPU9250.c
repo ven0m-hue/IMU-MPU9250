@@ -95,6 +95,29 @@ uint8_t MPU9250_init(MPU9250_Handle_t *imu)
 
 }
 
+
+static void AK8963_init(I2C_HandleTypeDef *I2Chandle)
+{
+	/*1.Reset the Mag sensor*/
+	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
+	HAL_Delay(1);
+	/*2.Fuse rom access mode*/
+	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, 0x0F);
+	HAL_Delay(1);
+	/*3.Power doen Magnetometer*/
+	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
+	HAL_Delay(1);
+	/*4.Mscale enable the 16bit resolution mode
+	 *  Enable continous mode data acquisition Mmode = b'0110 @refer data sheet
+	 */
+	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, Mscale << (4 | Mmode));
+	HAL_Delay(1);
+
+}
+
+
+
+
 /*
 	Sensor Reads acce, gyro and mag 16bit each in x,y,z.
 	Track the first register address and  then conintue retrieving the data.
@@ -267,24 +290,4 @@ static uint8_t readByte(I2C_HandleTypeDef *I2Chandle, uint8_t Address, uint8_t s
 	return rxData[0];
 
 }
-
-static void AK8963_init(I2C_HandleTypeDef *I2Chandle)
-{
-	/*1.Reset the Mag sensor*/
-	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
-	HAL_Delay(1);
-	/*2.Fuse rom access mode*/
-	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, 0x0F);
-	HAL_Delay(1);
-	/*3.Power doen Magnetometer*/
-	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, 0x00);
-	HAL_Delay(1);
-	/*4.Mscale enable the 16bit resolution mode
-	 *  Enable continous mode data acquisition Mmode = b'0110 @refer data sheet
-	 */
-	writeByte(I2Chandle, MPU9250_ADDRESS, AK8963_CNTL, Mscale << (4 | Mmode));
-	HAL_Delay(1);
-
-}
-
 
