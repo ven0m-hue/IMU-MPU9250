@@ -267,6 +267,11 @@ float getAres(uint8_t Ascale) {
   return aRes;
 }
 
+/*
+* I2C common utility wrapper funciton for reading and writing a byte of data from a given register address.
+*/
+
+
 static void writeByte(I2C_HandleTypeDef *I2Chandle, uint8_t Address, uint8_t subAddress, uint8_t data)
 {
 
