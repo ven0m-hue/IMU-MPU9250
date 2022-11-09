@@ -172,7 +172,10 @@ void MPU9250::AK8963_Init(I2C_HandleTypeDef& hi2c)
 	HAL_Delay(1);
 }
 
-
+/*
+* NED system. Since positive Z axis points down aka fighitng against the gravity, use a negative sign or 
+* North, East, Down (NED), therefore up is -ve in z axis. Used specially in aerospace
+*/
 void MPU9250::ReadAccel(MPU9250 &imu)
 {
 	uint8_t rawdata[6];
@@ -185,7 +188,8 @@ void MPU9250::ReadAccel(MPU9250 &imu)
 	//Follows the NED coordinate frame.
 	imu.acc[0] =  accX * getScale(uint16_t(Ascale_2G));
 	imu.acc[1] =  accY * getScale(uint16_t(Ascale_2G));
-	imu.acc[2] = -accZ * getScale(uint16_t(Ascale_2G));
+	imu.acc[2] =  accZ * getScale(uint16_t(Ascale_2G));
+	
 
 }
 
